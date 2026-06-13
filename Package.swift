@@ -13,7 +13,7 @@ let package = Package(
             name: "ViewStorage",
             targets: ["ViewStorage"]
         ),
-        .executable(
+        .library(
             name: "ViewStorageClient",
             targets: ["ViewStorageClient"]
         ),
@@ -37,7 +37,7 @@ let package = Package(
         .target(name: "ViewStorage", dependencies: ["ViewStorageMacros"]),
 
         // A client of the library, which is able to use the macro in its own code.
-        .executableTarget(name: "ViewStorageClient", dependencies: ["ViewStorage"]),
+        .target(name: "ViewStorageClient", dependencies: ["ViewStorage"]),
 
     ],
     swiftLanguageModes: [.v6]
