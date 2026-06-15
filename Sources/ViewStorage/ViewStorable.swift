@@ -124,6 +124,17 @@ extension Array: ViewStorable where Element: ViewStorable {
     }
 }
 
+extension Set: ViewStorable where Element: ViewStorable {
+    public static func read(from store: UserDefaults, forKey key: String) -> Set<Element>? {
+        guard let array = store.array(forKey: key) as? [Element] else { return nil }
+        return Set(array)
+    }
+
+    public func write(to store: UserDefaults, forKey key: String) {
+        store.set(Array(self), forKey: key)
+    }
+}
+
 extension Dictionary: ViewStorable where Key == String, Value: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> [String: Value]? {
         store.dictionary(forKey: key) as? [String: Value]
