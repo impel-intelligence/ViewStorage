@@ -114,21 +114,21 @@ extension URL: ViewStorable {
     }
 }
 
-extension Array<ViewStorable>: ViewStorable  {
-    public static func read(from store: UserDefaults, forKey key: String) -> [ViewStorable]? {
-        store.array(forKey: key) as? [ViewStorable]
+extension Array: ViewStorable where Element: ViewStorable {
+    public static func read(from store: UserDefaults, forKey key: String) -> [Element]? {
+        store.array(forKey: key) as? [Element]
     }
-    
+
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
 }
 
-extension Dictionary<String, ViewStorable>: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> [String: ViewStorable]? {
-        store.dictionary(forKey: key)  as? [String: ViewStorable]
+extension Dictionary: ViewStorable where Key == String, Value: ViewStorable {
+    public static func read(from store: UserDefaults, forKey key: String) -> [String: Value]? {
+        store.dictionary(forKey: key) as? [String: Value]
     }
-    
+
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }

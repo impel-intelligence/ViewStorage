@@ -6,6 +6,7 @@ struct TestView: View {
     @State var id: String = "hello"
     
     @ViewStorage("storableValue", path: \Self.id) var storableValue: String = "hi"
+    @ViewStorage("storableArray", path: \Self.id) var storableArray: [String] = ["hello"]
 
     var body: some View {
         VStack {
