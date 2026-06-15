@@ -20,4 +20,4 @@ import Foundation
 /// The stored property's type must conform to `ViewStorable`.
 @attached(accessor)
 @attached(peer, names: suffixed(Store), prefixed(`$`))
-public macro ViewStorage<Root, Value: ViewStorable>(_ key: String, path: KeyPath<Root, Value>) = #externalMacro(module: "ViewStorageMacros", type: "ViewStorageMacro")
+public macro ViewStorage<Root, Value: StringProtocol>(_ key: String, path: KeyPath<Root, Value>) = #externalMacro(module: "ViewStorageMacros", type: "ViewStorageMacro")
