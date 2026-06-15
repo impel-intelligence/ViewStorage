@@ -34,11 +34,11 @@ public protocol ViewStorable {
 }
 
 // MARK: Property-list-native conformances
-
 extension Bool: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Bool? {
         store.object(forKey: key) as? Bool
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -48,6 +48,7 @@ extension Int: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Int? {
         store.object(forKey: key) as? Int
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -57,6 +58,7 @@ extension Double: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Double? {
         store.object(forKey: key) as? Double
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -66,6 +68,7 @@ extension Float: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Float? {
         store.object(forKey: key) as? Float
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -75,6 +78,7 @@ extension String: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> String? {
         store.object(forKey: key) as? String
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -84,6 +88,7 @@ extension Data: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Data? {
         store.data(forKey: key)
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -93,6 +98,7 @@ extension Date: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Date? {
         store.object(forKey: key) as? Date
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
@@ -102,29 +108,51 @@ extension URL: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> URL? {
         store.url(forKey: key)
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         store.set(self, forKey: key)
     }
 }
 
-// MARK: RawRepresentable default
+extension Array<ViewStorable>: ViewStorable  {
+    public static func read(from store: UserDefaults, forKey key: String) -> [ViewStorable]? {
+        store.array(forKey: key) as? [ViewStorable]
+    }
+    
+    public func write(to store: UserDefaults, forKey key: String) {
+        store.set(self, forKey: key)
+    }
+}
 
+extension Dictionary<String, ViewStorable>: ViewStorable {
+    public static func read(from store: UserDefaults, forKey key: String) -> [String: ViewStorable]? {
+        store.dictionary(forKey: key)  as? [String: ViewStorable]
+    }
+    
+    public func write(to store: UserDefaults, forKey key: String) {
+        store.set(self, forKey: key)
+    }
+}
+
+
+// MARK: RawRepresentable default, only when RawRepresentable == ViewStorable.
 extension ViewStorable where Self: RawRepresentable, Self.RawValue: ViewStorable {
     public static func read(from store: UserDefaults, forKey key: String) -> Self? {
         RawValue.read(from: store, forKey: key).flatMap(Self.init(rawValue:))
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         rawValue.write(to: store, forKey: key)
     }
 }
 
 // MARK: Codable default (stored as JSON `Data`)
-
 extension ViewStorable where Self: Codable {
     public static func read(from store: UserDefaults, forKey key: String) -> Self? {
         guard let data = store.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(Self.self, from: data)
     }
+    
     public func write(to store: UserDefaults, forKey key: String) {
         guard let data = try? JSONEncoder().encode(self) else { return }
         store.set(data, forKey: key)
