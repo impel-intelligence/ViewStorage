@@ -27,145 +27,170 @@ import Foundation
 /// > defaults, the conformance is ambiguous — provide `read`/`write` explicitly
 /// > to choose the representation.
 public protocol ViewStorable {
+    /// A property-list-compatible representation of `self`.
+    var plistRepresentable: Any { get }
+    
+    /// Initialize a copy of this `Self` using the property-list-compatible representation of a `Self`.
+    init?(plistRepresentable: Any)
+    
     /// Reads the value stored at `key`, or `nil` if absent / undecodable.
     static func read(from store: UserDefaults, forKey key: String) -> Self?
     /// Writes `self` to `key`.
     func write(to store: UserDefaults, forKey key: String)
 }
 
-// MARK: Property-list-native conformances
-extension Bool: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Bool? {
-        store.object(forKey: key) as? Bool
+extension ViewStorable {
+    public static func read(from store: UserDefaults, forKey key: String) -> Self? {
+        return store.object(forKey: key).flatMap({ Self.init(plistRepresentable: $0) })
     }
     
     public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+        store.set(plistRepresentable, forKey: key)
+    }
+}
+
+// MARK: Property-list-native conformances
+extension Bool: ViewStorable {
+    public var plistRepresentable: Any { self }
+    
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? Bool else { return nil }
+        self = value
     }
 }
 
 extension Int: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Int? {
-        store.object(forKey: key) as? Int
-    }
+    public var plistRepresentable: Any { self }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? Int else { return nil }
+        self = value
     }
 }
 
 extension Double: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Double? {
-        store.object(forKey: key) as? Double
-    }
+    public var plistRepresentable: Any { self }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? Double else { return nil }
+        self = value
     }
 }
 
 extension Float: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Float? {
-        store.object(forKey: key) as? Float
-    }
+    public var plistRepresentable: Any { self }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? Float else { return nil }
+        self = value
     }
 }
 
 extension String: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> String? {
-        store.object(forKey: key) as? String
-    }
+    public var plistRepresentable: Any { self }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? String else { return nil }
+        self = value
     }
 }
 
 extension Data: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Data? {
-        store.data(forKey: key)
-    }
+    public var plistRepresentable: Any { self }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? Data else { return nil }
+        self = value
     }
 }
 
 extension Date: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Date? {
-        store.object(forKey: key) as? Date
-    }
+    public var plistRepresentable: Any { self }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
-    }
-}
-
-extension URL: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> URL? {
-        store.url(forKey: key)
-    }
-    
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? Date else { return nil }
+        self = value
     }
 }
 
 extension Array: ViewStorable where Element: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> [Element]? {
-        store.array(forKey: key) as? [Element]
-    }
-
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
-    }
-}
-
-extension Set: ViewStorable where Element: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Set<Element>? {
-        guard let array = store.array(forKey: key) as? [Element] else { return nil }
-        return Set(array)
-    }
-
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(Array(self), forKey: key)
+    public var plistRepresentable: Any { map(\.plistRepresentable) }
+    
+    public init?(plistRepresentable: Any) {
+        guard let objects = plistRepresentable as? [Any] else { return nil }
+        var array: [Element] = []
+        array.reserveCapacity(objects.count)
+        for object in objects {
+            guard let element = Element(plistRepresentable: object) else { return nil }
+            array.append(element)
+        }
+        self = array
     }
 }
 
 extension Dictionary: ViewStorable where Key == String, Value: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> [String: Value]? {
-        store.dictionary(forKey: key) as? [String: Value]
+    public var plistRepresentable: Any { mapValues(\.plistRepresentable) }
+    
+    public init?(plistRepresentable: Any) {
+        guard let objects = plistRepresentable as? [String: Any] else { return nil }
+        var dictionary: [String: Value] = [:]
+        for (key, value) in objects {
+            guard let element = Value(plistRepresentable: value) else { return nil }
+            dictionary[key] = element
+        }
+        self = dictionary
     }
+}
 
-    public func write(to store: UserDefaults, forKey key: String) {
-        store.set(self, forKey: key)
+
+//MARK: Non-native property list values
+extension Set: ViewStorable where Element: ViewStorable {
+    public var plistRepresentable: Any { map(\.plistRepresentable) }
+    
+    public init?(plistRepresentable: Any) {
+        guard let objects = plistRepresentable as? [Any] else { return nil }
+        var set: Set<Element> = []
+        set.reserveCapacity(objects.count)
+        for object in objects {
+            guard let element = Element(plistRepresentable: object) else { return nil }
+            set.insert(element)
+        }
+        self = set
+    }
+}
+
+extension URL: ViewStorable {
+    public var plistRepresentable: Any { self }
+    
+    public init?(plistRepresentable: Any) {
+        guard let value = plistRepresentable as? String else { return nil }
+        guard let url = URL(string: value) else { return nil }
+        self = url
     }
 }
 
 
 // MARK: RawRepresentable default, only when RawRepresentable == ViewStorable.
 extension ViewStorable where Self: RawRepresentable, Self.RawValue: ViewStorable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Self? {
-        RawValue.read(from: store, forKey: key).flatMap(Self.init(rawValue:))
+    public var plistRepresentable: Any {
+        rawValue.plistRepresentable
     }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        rawValue.write(to: store, forKey: key)
+    public init?(plistRepresentable: Any) {
+        guard let value = RawValue(plistRepresentable: plistRepresentable) else { return nil }
+        self.init(rawValue: value)
     }
 }
 
 // MARK: Codable default (stored as JSON `Data`)
 extension ViewStorable where Self: Codable {
-    public static func read(from store: UserDefaults, forKey key: String) -> Self? {
-        guard let data = store.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(Self.self, from: data)
+    public var propertyListValue: Any {
+        (try? JSONEncoder().encode(self)) ?? Data()
     }
     
-    public func write(to store: UserDefaults, forKey key: String) {
-        guard let data = try? JSONEncoder().encode(self) else { return }
-        store.set(data, forKey: key)
+    public init?(propertyListValue: Any) {
+        guard let data = propertyListValue as? Data else { return nil }
+        guard let value = try? JSONDecoder().decode(Self.self, from: data) else { return nil }
+        self = value
     }
 }
