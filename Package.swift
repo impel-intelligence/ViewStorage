@@ -19,7 +19,12 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "603.0.0-latest"),
+        // Widened from `603.0.0-latest` to span 600...603 so this package can
+        // coexist with dependencies pinned to older swift-syntax majors (e.g.
+        // huggingface/AnyLanguageModel, which caps swift-syntax at 600.x).
+        // The macro below uses only APIs stable across these majors.
+        // Edited by Claude Opus 4.8 (Anthropic) on 2026-06-29
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", "600.0.0" ..< "604.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
